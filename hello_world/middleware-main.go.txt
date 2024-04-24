@@ -1,0 +1,52 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/gorilla/mux"
+)
+
+func logging(f http.HandlerFunc) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        log.Println(r.URL.Path)
+        f(w, r)
+    }
+}
+
+func foo(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintln(w, "foo")
+}
+
+func bar(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintln(w, "bar")
+}
+
+func main(){
+	r := mux.NewRouter()
+
+	r.HandleFunc("/books/{title}/page/{page}", func(w http.ResponseWriter, r *http.Request){
+		vars := mux.Vars(r)
+		title := vars["title"]
+		page := vars["page"]
+		fmt.Fprintf(w, "Hello, you're requested: %s\n", r.URL.Path)
+		fmt.Fprintf(w, "You've requested the book: %s on page %s\n", title, page)
+		fmt.Printf("title: %s, page: %s\n", vars["title"], vars["page"])
+	})
+
+	r.HandleFunc("/foo", foo)
+	r.HandleFunc("/bar", logging(bar))
+
+	// r.HandleFunc("/books/{title}", CreateBook).Methods("POST")
+	// r.HandleFunc("/books/{title}", ReadBook).Methods("GET")
+	// r.HandleFunc("/books/{title}", UpdateBook).Methods("PUT")
+	// r.HandleFunc("/books/{title}", DeleteBook).Methods("DELETE")
+
+	// bookrouter := r.PathPrefix("/books").Subrouter()
+	// bookrouter.HandleFunc("/", AllBooks)
+	// bookrouter.HandleFunc("/{title}", GetBook)
+
+
+	http.ListenAndServe(":8080", r)
+}
